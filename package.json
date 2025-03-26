@@ -1,0 +1,22 @@
+{
+  "name": "web_back_end",
+  "version": "1.0.0",
+  "description": "back-end projet WEB contenant le serveur et la database",
+  "main": "serveur.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kitKatdarkMint/WEB_back_end.git"
+  },
+  "author": "K.Somers Z.Feuilloy P.Igue J.Shen",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/kitKatdarkMint/WEB_back_end/issues"
+  },
+  "homepage": "https://github.com/kitKatdarkMint/WEB_back_end#readme",
+  "dependencies": {
+    "express": "^4.21.2"
+  }
+}
