@@ -13,6 +13,13 @@ if os.path.exists(json_file_path):
             activity_data = []  
 else:
     activity_data = []  
+def event_exists(event, data):
+    for existing_event in data:
+        if (existing_event["Date"] == event["Date"] and
+            existing_event["Titre"] == event["Titre"] and
+            existing_event["Lieu"] == event["Lieu"]):
+            return True
+    return False
 def scrape_page(URL):
     page = requests.get(URL)
     soup = BeautifulSoup(page.content, "html.parser")
@@ -25,6 +32,17 @@ def scrape_page(URL):
         if date:
             date_text = date.get_text(strip=True) 
             activity_info["Date"] = date_text
+        image_div=activity.find("div",class_="event-photo col-9 col-md-12 col-lg-5 mb-3")
+        if image_div:
+            image_tag=image_div.find("img")
+            if image_tag and image_tag.has_attr("src"):
+                image=image_tag["src"]
+                image="https://www.lyoncampus.com"+image
+                activity_info["image"] = image
+            else:
+                activity_info["image"] = None
+        
+    
         link=activity.find("div",class_="event-excerpt d-none d-lg-block").find("a")
         if link:
             title=link.get_text(strip=True) 
@@ -41,9 +59,10 @@ def scrape_page(URL):
                     lieu_div=row_div.find("div",class_="col-md-6")
                     if lieu_div:
                         lieu=lieu_div.find("p").get_text(strip=True)
-                        lieu=lieu.split("Lyon")[0].strip()
-                        lieu+=" Lyon"
-                        activity_info["Lieu"] = lieu            
+                        if "lyon" in lieu.lower():
+                            lieu=lieu.split("Lyon")[0].strip()
+                            lieu+=" Lyon"
+                            activity_info["Lieu"] = lieu            
             prix_header=event_soup.find("h2",string="Tarif")
             if prix_header:
                 prix_div=lieu_header.find_next("div",class_="d-flex justify-content-center")
@@ -52,18 +71,26 @@ def scrape_page(URL):
                     if prix_svg and prix_svg.has_attr("aria-label"):
                         arialabel=prix_svg["aria-label"]
                         if arialabel=="Cet événement est gratuit":
-                            prix="Gratuit"
+                            prix=0
                         elif arialabel=="Cet événement est éligible au Pass Culture":
                             prix="Pass Culture"
+                        activity_info["Tarif"] = prix
                 else:
                     prix=prix_header.find_next("p").get_text(strip=True)
-                    prix=prix.split("€")[0].strip()
-                    prix+="€"
-                activity_info["Tarif"] = prix
-        required_fields = ["Date", "Titre", "Lieu", "Tarif"]
+                    if "libre"not in prix and prix!="Tarif selon l'événement":
+                        if "euros" in prix.lower():
+                            prix=prix.split("euros")[0].strip()   
+                        elif "€" in prix:
+                            prix=prix.split("€")[0].strip()
+                            prix=int(prix)
+                        activity_info["Tarif"] = prix
+
+        activity_info["Type"]="Activité"        
+        required_fields = ["Date", "Titre", "Lieu", "Tarif","Type","image"]
         if all(field in activity_info for field in required_fields):
-            tmp_data.append(activity_info) 
-        activity_data.extend(tmp_data)
+            if not event_exists(activity_info, activity_data): 
+                tmp_data.append(activity_info) 
+    activity_data.extend(tmp_data)
     with open(json_file_path, "w", encoding="utf-8") as json_file:
         json.dump(activity_data, json_file, indent=4, ensure_ascii=False)
     next_page_link=soup.find("li",class_="next pagination-link pagination-link--next").find("a")["href"]
