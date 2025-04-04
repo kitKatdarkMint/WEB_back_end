@@ -7,3 +7,5 @@ L'état favori sera modifié dynamiquement avec une interactivité du front end 
 
 $ python -m pip install requests
 $ python -m pip install beautifulsoup4
+pip install pymongo
+installer mongodb (ligne de commande ?, moi je l'ai installer à la main)
