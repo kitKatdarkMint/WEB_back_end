@@ -15,6 +15,8 @@ with open(JSON_FILE, 'r', encoding='utf-8') as f:
     data = json.load(f)
 
 collection.delete_many({}) 
+# collection.find().sort({"Tarif": 1})
 collection.insert_many(data)
+
 
 print(f"{len(data) if isinstance(data, list) else 1} document(s) inséré(s) dans {COLLECTION_NAME}.")
