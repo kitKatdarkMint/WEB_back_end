@@ -3,6 +3,7 @@ from bs4 import BeautifulSoup
 import json
 import os
 import time
+import re
 base_URL = "https://www.lyoncampus.com/sortir/agenda"
 json_file_path = "events.json"
 if os.path.exists(json_file_path):
@@ -72,21 +73,32 @@ def scrape_page(URL):
                         arialabel=prix_svg["aria-label"]
                         if arialabel=="Cet événement est gratuit":
                             prix=0
+                            activity_info["Carte"] ="None"
+
                         elif arialabel=="Cet événement est éligible au Pass Culture":
-                            prix="Pass Culture"
+                            prix=0
+                            activity_info["Carte"] ="Oui"
                         activity_info["Tarif"] = prix
                 else:
-                    prix=prix_header.find_next("p").get_text(strip=True)
+                    prix_1=prix_header.find_next("p").get_text(strip=True)
                     if "libre"not in prix and prix!="Tarif selon l'événement":
                         if "euros" in prix.lower():
-                            prix=prix.split("euros")[0].strip()   
+                            match=re.search(r'(\w+)\s*euros', prix)
+                            if match and match.group(1).isdigit():   
+                                prix = int(match.group(1))
+                            else:
+                                prix = None
                         elif "€" in prix:
-                            prix=prix.split("€")[0].strip()
-                            prix=int(prix)
+                            match=re.search(r'(\w+)\s*€', prix)
+                            if match and match.group(1).isdigit():
+                                prix = int(match.group(1))
+                            else:
+                                prix = None
                         activity_info["Tarif"] = prix
+                        activity_info["Carte"] ="None"
 
         activity_info["Type"]="Activité"        
-        required_fields = ["Date", "Titre", "Lieu", "Tarif","Type","image"]
+        required_fields = ["Date", "Titre", "Lieu", "Tarif","Type","image","Carte"]
         if all(field in activity_info for field in required_fields):
             if not event_exists(activity_info, activity_data): 
                 tmp_data.append(activity_info) 
